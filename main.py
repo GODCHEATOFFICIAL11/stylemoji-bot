@@ -3,11 +3,11 @@ from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandle
 from utils.sticker import create_new_pack, add_sticker
 import os
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "7976350709:AAEYK1fFZ4accAB5cmPP4_dTRQM-U-ZWJ_8")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 OWNER_ID = 1209978813
 CHANNELS = [
-    {"id": -1001857302142, "link": "https://t.me/+ZUXtxXBzR_VkMjU1"},  # Forcible
-    {"id": None, "link": "https://t.me/+XvJd4DeTig5hYzE9"}              # Optional
+    {"id": -1001857302142, "link": "https://t.me/+ZUXtxXBzR_VkMjU1"},
+    {"id": None, "link": "https://t.me/+XvJd4DeTig5hYzE9"}
 ]
 
 HELP_TEXT = """🤖 *How to use StyleMojiBot*
@@ -21,8 +21,7 @@ Welcome to your personal sticker bot! Here's what you can do:
 🎨 /moji – Turn an emoji into a style sticker  
 📚 /help – Show this help message
 
-⚠ You must join Channel 1 to use this bot.
-"""
+⚠ You must join Channel 1 to use this bot."""
 
 async def check_membership(user_id, bot):
     ch = CHANNELS[0]
@@ -39,18 +38,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         msg = f"🚀 New User Started the Bot\n\n👤 Name: {user.full_name}\n🆔 User ID: {user.id}\n🔗 Username: @{user.username}" if user.username else f"🚀 New User Started the Bot\n\n👤 Name: {user.full_name}\n🆔 User ID: {user.id}\n🔗 Username: No username"
         await context.bot.send_message(chat_id=OWNER_ID, text=msg)
-    except Exception as e:
-        print('Error notifying owner:', e)
+    except:
+        pass
 
-    user_id = update.effective_user.id
-    if not await check_membership(user_id, context.bot):
+    if not await check_membership(user.id, context.bot):
         buttons = [
             [InlineKeyboardButton("📢 Join Channel 1", url=CHANNELS[0]["link"])],
             [InlineKeyboardButton("📢 Join Channel 2 (optional)", url=CHANNELS[1]["link"])],
             [InlineKeyboardButton("✅ I've Joined", callback_data="verify_join")]
         ]
-        reply_markup = InlineKeyboardMarkup(buttons)
-        await update.message.reply_text("🔐 To use this bot, please join the first channel:", reply_markup=reply_markup)
+        await update.message.reply_text("🔐 To use this bot, please join the required channel:", reply_markup=InlineKeyboardMarkup(buttons))
         return
 
     keyboard = [["💖 Create love name status"], ["📦 List of my packs"]]
@@ -60,9 +57,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def verify_join(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    user_id = query.from_user.id
-    if not await check_membership(user_id, context.bot):
-        await query.edit_message_text("❌ You're still not a member of the required channel. Please join and try again.")
+    if not await check_membership(query.from_user.id, context.bot):
+        await query.edit_message_text("❌ You're still not a member of the required channel.")
         return
 
     keyboard = [["💖 Create love name status"], ["📦 List of my packs"]]
@@ -88,9 +84,7 @@ app.add_handler(CommandHandler("start", start))
 app.add_handler(CallbackQueryHandler(verify_join, pattern="verify_join"))
 app.add_handler(CommandHandler("help", help_command))
 app.add_handler(CommandHandler("new", new))
-app.add_handler(CommandHandler("done", help_command))
-app.add_handler(CommandHandler("moji", help_command))
-app.add_handler(CommandHandler("list", help_command))
 app.add_handler(MessageHandler(filters.PHOTO, add_sticker))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 app.run_polling()
+
